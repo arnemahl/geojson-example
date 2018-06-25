@@ -2,7 +2,10 @@ import React, { Component } from 'react';
 import L from 'leaflet';
 import './App.css';
 
+import geojson from './geojson';
+
 class App extends Component {
+
   componentDidMount() {
     const mymap = L.map('map').setView([51.505, -0.09], 13);
 
@@ -40,7 +43,13 @@ class App extends Component {
     }
 
     mymap.on('click', onMapClick);
+
+    L
+      .geoJSON(geojson)
+      .addTo(mymap)
+    ;
   }
+
   render() {
     return (
       <div id="map" />
