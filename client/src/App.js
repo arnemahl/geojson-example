@@ -4,7 +4,41 @@ import './App.css';
 
 import geojson from './geojson';
 
+const layerStyle = {
+  default: {
+    weight: 2,
+    color: '#3388fe',
+    dashArray: '',
+    fillOpacity: 0.5
+  },
+  selected: {
+    weight: 2,
+    color: 'coral',
+    dashArray: '',
+    fillOpacity: 0.5
+  },
+};
+
 class App extends Component {
+
+  felaySets = []
+
+  state = {
+    selectedSets: []
+  }
+
+  onSetClick = (felaySet) => (event) => {
+    if (event.shiftKey) {
+      this.setState(state => {
+        selectedSets: [
+          felaySet,
+          ...state.felaySet
+        ]
+      });
+    } else {
+      this.setState({ selectedSets: [felaySet] });
+    }
+  }
 
   componentDidMount() {
     const mymap = L.map('map').setView([51.508, -0.118], 14);
@@ -32,7 +66,6 @@ class App extends Component {
       [51.51, -0.047]
     ]).addTo(mymap).bindPopup("I am a polygon.");
 
-
     const popup = L.popup();
 
     function onMapClick(e) {
@@ -42,17 +75,40 @@ class App extends Component {
       .openOn(mymap);
     }
 
-    mymap.on('click', onMapClick);
+    // mymap.on('click', onMapClick);
 
     L
-      .geoJSON(geojson)
+      .geoJSON(geojson, {
+        onEachFeature: (feature, layer) => {
+          layer.setStyle(layerStyle.default);
+
+          const felaySet = {
+            feature,
+            layer,
+          };
+
+          layer.on('click', this.onSetClick(felaySet));
+          this.felaySets.push(felaySet);
+        }
+      })
       .addTo(mymap)
     ;
 
     window.map = mymap;
   }
 
+  showSelection() {
+  }
+
   render() {
+    this.felaySets.forEach(felaySet => {
+      if (this.state.selectedSets.includes(felaySet)) {
+        felaySet.layer.setStyle(layerStyle.selected);
+      } else {
+        felaySet.layer.setStyle(layerStyle.default);
+      }
+    });
+
     return (
       <div id="map" style={{width: '100vw', height: '100vh'}} />
     );
