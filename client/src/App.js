@@ -28,16 +28,13 @@ class App extends Component {
   }
 
   onSetClick = (felaySet) => (event) => {
-    if (event.shiftKey) {
-      this.setState(state => {
-        selectedSets: [
-          felaySet,
-          ...state.felaySet
-        ]
-      });
-    } else {
-      this.setState({ selectedSets: [felaySet] });
-    }
+    this.setState(({ selectedSets: prevSelection }) => {
+      const nextSelection = prevSelection.includes(felaySet)
+        ? prevSelection.filter(remaining => remaining !== felaySet)
+        : prevSelection.concat([ felaySet ]);
+
+      return { selectedSets: nextSelection };
+    });
   }
 
   componentDidMount() {
