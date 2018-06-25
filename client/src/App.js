@@ -7,7 +7,7 @@ import geojson from './geojson';
 class App extends Component {
 
   componentDidMount() {
-    const mymap = L.map('map').setView([51.508, -0.118], 13);
+    const mymap = L.map('map').setView([51.508, -0.118], 14);
 
     L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw', {
       maxZoom: 18,
@@ -54,7 +54,7 @@ class App extends Component {
 
   render() {
     return (
-      <div id="map" />
+      <div id="map" style={{width: '100vw', height: '100vh'}} />
     );
   }
 }
