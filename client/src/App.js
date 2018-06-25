@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { Component, Fragment } from 'react';
 import L from 'leaflet';
 import './App.css';
 
@@ -94,12 +94,19 @@ class App extends Component {
     window.map = mymap;
   }
 
-  showSelection() {
+  performUnion = () => {
+    alert('TODO: implement performUnion');
+  }
+
+  performIntersect = () => {
+    alert('TODO: implement performIntersect');
   }
 
   render() {
+    const { selectedSets } = this.state;
+
     this.felaySets.forEach(felaySet => {
-      if (this.state.selectedSets.includes(felaySet)) {
+      if (selectedSets.includes(felaySet)) {
         felaySet.layer.setStyle(layerStyle.selected);
       } else {
         felaySet.layer.setStyle(layerStyle.default);
@@ -107,7 +114,25 @@ class App extends Component {
     });
 
     return (
-      <div id="map" style={{width: '100vw', height: '100vh'}} />
+      <Fragment>
+        <div id="map" style={{width: '100vw', height: '80vh'}} />
+        <div className="geojson-controls">
+          <button
+            disabled={selectedSets.length !== 2}
+            title={selectedSets.length !== 2 ? 'Select exactly two polygons to perform union' : ''}
+            onClick={this.performUnion}
+          >
+            Union
+          </button>
+          <button
+            disabled={selectedSets.length !== 2}
+            title={selectedSets.length !== 2 ? 'Select exactly two polygons to perform intersect' : ''}
+            onClick={this.performIntersect}
+          >
+            Intersect
+          </button>
+        </div>
+      </Fragment>
     );
   }
 }

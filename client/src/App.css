@@ -1,0 +1,16 @@
+.geojson-controls {
+  text-align: center;
+  padding: 20px;
+}
+.geojson-controls button {
+  margin: 10px;
+  padding: 0.4em 1em;
+  border: none;
+  background-color: #3388fe;
+  color: white;
+  font-size: 24px;
+}
+.geojson-controls button:disabled {
+  background-color: #a1c8ff;
+  cursor: not-allowed;
+}
