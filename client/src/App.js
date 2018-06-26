@@ -103,11 +103,13 @@ class App extends Component {
       const selection = geojson.features.filter((_, index) => operation.selection.includes(index));
       const combineFn = { union, intersect }[operation.name];
 
+      const arrNotNull = (val) => val === null ? [] : val;
+
       return {
         ...geojson,
         features: geojson.features
           .filter(remaining => !selection.includes(remaining))
-          .concat(combineFn(...selection)),
+          .concat(arrNotNull(combineFn(...selection))),
       };
     }
 
