@@ -3,6 +3,8 @@ import L from 'leaflet';
 import './App.css';
 
 import geojson from './geojson';
+import union from '@turf/union';
+import intersect from '@turf/intersect';
 
 const layerStyle = {
   default: {
@@ -73,6 +75,13 @@ class App extends Component {
     }
 
     // mymap.on('click', onMapClick);
+    this.map = mymap;
+    this.renderGeoJson();
+  }
+
+  renderGeoJson() {
+    this.felaySets.forEach(({ layer }) => this.map.removeLayer(layer));
+    this.felaySets = [];
 
     L
       .geoJSON(geojson, {
@@ -88,18 +97,27 @@ class App extends Component {
           this.felaySets.push(felaySet);
         }
       })
-      .addTo(mymap)
+      .addTo(this.map)
     ;
+  }
 
-    window.map = mymap;
+  combineAndReplaceSelection(combineFn) {
+    const selection = this.state.selectedSets.map(felaySet => felaySet.feature);
+
+    geojson.features = geojson.features
+      .filter(remaining => !selection.includes(remaining))
+      .concat(combineFn(...selection));
+
+    this.setState({ selectedSets: [] });
+    this.renderGeoJson();
   }
 
   performUnion = () => {
-    alert('TODO: implement performUnion');
+    this.combineAndReplaceSelection(union);
   }
 
   performIntersect = () => {
-    alert('TODO: implement performIntersect');
+    this.combineAndReplaceSelection(intersect);
   }
 
   render() {
