@@ -118,6 +118,7 @@ class App extends Component {
   }
 
   renderGeoJson() {
+    this.setState({ selectedSets: [] });
     this.felaySets.forEach(({ layer }) => this.map.removeLayer(layer));
     this.felaySets = [];
 
@@ -142,7 +143,7 @@ class App extends Component {
   performOperation(name) {
     const selection = this.state.selectedSets.map(felaySet => this.geojson.features.indexOf(felaySet.feature))
 
-    this.setState({ selectedSets: [] });
+    this.setState({ selectedSets: [] });
 
     this.dbRef.child('operations').set(
       this.db.operations.concat({ name, selection })
