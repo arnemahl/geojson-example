@@ -2,9 +2,10 @@ import React, { Component, Fragment } from 'react';
 import L from 'leaflet';
 import './App.css';
 
-import geojson from './geojson';
 import union from '@turf/union';
 import intersect from '@turf/intersect';
+
+import firebase from 'firebase';
 
 const layerStyle = {
   default: {
@@ -39,7 +40,7 @@ class App extends Component {
     });
   }
 
-  componentDidMount() {
+  initializeMap() {
     const mymap = L.map('map').setView([51.508, -0.118], 14);
 
     L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw', {
@@ -51,6 +52,64 @@ class App extends Component {
     }).addTo(mymap);
 
     this.map = mymap;
+  }
+
+  componentDidMount() {
+    this.initializeMap();
+
+    this.dbRef = firebase
+      .database()
+      .ref('projects')
+      .child('sample-project');
+
+    this.dbRef.child('initialGeoJson').once('value', this.receiveInitialState);
+    this.dbRef.child('operations').on('value', this.receiveOperations);
+
+    this.renderGeoJson();
+  }
+
+  componentWillUnmount() {
+    this.dbRef.child('operations').off('value', this.receiveOperations);
+  }
+
+  db = {} // Synced content from DB
+  receiveInitialState = (snap) => {
+    this.db.initialGeoJson = snap.val();
+    this.updateGeoJSON();
+  }
+  receiveOperations = (snap) => {
+    this.db.operations = snap.val();
+    this.updateGeoJSON();
+  }
+
+  updateGeoJSON() {
+    const { initialGeoJson, operations } = this.db;
+
+    if (!initialGeoJson) {
+      return;
+    }
+
+    if (!operations) {
+      this.geojson = initialGeoJson;
+      this.renderGeoJson();
+      return;
+    }
+
+    function combineAndReplace(geojson, selection, combineFn) {
+      geojson.features = geojson.features
+        .filter(remaining => !selection.includes(remaining))
+        .concat(combineFn(...selection));
+
+      this.setState({ selectedSets: [] });
+      this.renderGeoJson();
+    }
+    function applyOperation(geojson, operation) {
+      const selection = geojson.features.filter((_, index) => operation.selection.includes(index));
+      const combineFn = { union, intersect }[operation.fn];
+      combineAndReplace(geojson, selection, combineFn);
+    }
+
+    this.geojson = operations.reduce(applyOperation, initialGeoJson);
     this.renderGeoJson();
   }
 
@@ -59,7 +118,7 @@ class App extends Component {
     this.felaySets = [];
 
     L
-      .geoJSON(geojson, {
+      .geoJSON(this.geojson, {
         onEachFeature: (feature, layer) => {
           layer.setStyle(layerStyle.default);
 
@@ -76,23 +135,22 @@ class App extends Component {
     ;
   }
 
-  combineAndReplaceSelection(combineFn) {
-    const selection = this.state.selectedSets.map(felaySet => felaySet.feature);
+  performOperation(fn) {
+    const selection = this.state.selectedSets.map(felaySet => this.geojson.features.indexOf(felaySet.feature))
 
-    geojson.features = geojson.features
-      .filter(remaining => !selection.includes(remaining))
-      .concat(combineFn(...selection));
+    this.setState({ selectedSets: [] });
 
-    this.setState({ selectedSets: [] });
-    this.renderGeoJson();
+    this.dbRef.child('operations').set(
+      this.db.operations.concat({ fn, selection })
+    );
   }
 
   performUnion = () => {
-    this.combineAndReplaceSelection(union);
+    this.performOperation('union');
   }
 
   performIntersect = () => {
-    this.combineAndReplaceSelection(intersect);
+    this.performOperation('intersect');
   }
 
   render() {
