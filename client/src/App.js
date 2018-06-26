@@ -27,7 +27,8 @@ class App extends Component {
   felaySets = []
 
   state = {
-    selectedSets: []
+    selectedSets: [],
+    lastOperation: void 0,
   }
 
   onSetClick = (felaySet) => (event) => {
@@ -80,6 +81,9 @@ class App extends Component {
   receiveOperations = (snap) => {
     this.db.operations = snap.val() || [];
     this.updateGeoJSON();
+    this.setState({
+      lastOperation: this.db.operations[0]
+    });
   }
 
   updateGeoJSON() {
@@ -97,13 +101,14 @@ class App extends Component {
 
     function applyOperation(geojson, operation) {
       const selection = geojson.features.filter((_, index) => operation.selection.includes(index));
-      const combineFn = { union, intersect }[operation.fn];
+      const combineFn = { union, intersect }[operation.name];
 
-      geojson.features = geojson.features
-        .filter(remaining => !selection.includes(remaining))
-        .concat(combineFn(...selection));
-
-      return geojson;
+      return {
+        ...geojson,
+        features: geojson.features
+          .filter(remaining => !selection.includes(remaining))
+          .concat(combineFn(...selection)),
+      };
     }
 
     this.geojson = operations.reduce(applyOperation, initialGeoJson);
@@ -132,13 +137,13 @@ class App extends Component {
     ;
   }
 
-  performOperation(fn) {
+  performOperation(name) {
     const selection = this.state.selectedSets.map(felaySet => this.geojson.features.indexOf(felaySet.feature))
 
     this.setState({ selectedSets: [] });
 
     this.dbRef.child('operations').set(
-      this.db.operations.concat({ fn, selection })
+      this.db.operations.concat({ name, selection })
     );
   }
 
@@ -150,8 +155,20 @@ class App extends Component {
     this.performOperation('intersect');
   }
 
+  revertLastOperation = () => {
+    const { operations } = this.db;
+
+    if (!operations) {
+      return;
+    }
+
+    this.dbRef.child('operations').set(
+      operations.slice(0, operations.length - 1)
+    );
+  }
+
   render() {
-    const { selectedSets } = this.state;
+    const { selectedSets, lastOperation } = this.state;
 
     this.felaySets.forEach(felaySet => {
       if (selectedSets.includes(felaySet)) {
@@ -178,6 +195,13 @@ class App extends Component {
             onClick={this.performIntersect}
           >
             Intersect
+          </button>
+          <button
+            disabled={!lastOperation}
+            title={!lastOperation ? 'No operations to revert' : `Revert last operation (${lastOperation.name})`}
+            onClick={this.revertLastOperation}
+          >
+            Revert operation
           </button>
         </div>
       </Fragment>

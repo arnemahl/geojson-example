@@ -9,6 +9,7 @@
   background-color: #3388fe;
   color: white;
   font-size: 24px;
+  cursor: pointer;
 }
 .geojson-controls button:disabled {
   background-color: #a1c8ff;
