@@ -78,7 +78,7 @@ class App extends Component {
     this.updateGeoJSON();
   }
   receiveOperations = (snap) => {
-    this.db.operations = snap.val();
+    this.db.operations = snap.val() || [];
     this.updateGeoJSON();
   }
 
@@ -95,18 +95,15 @@ class App extends Component {
       return;
     }
 
-    function combineAndReplace(geojson, selection, combineFn) {
+    function applyOperation(geojson, operation) {
+      const selection = geojson.features.filter((_, index) => operation.selection.includes(index));
+      const combineFn = { union, intersect }[operation.fn];
+
       geojson.features = geojson.features
         .filter(remaining => !selection.includes(remaining))
         .concat(combineFn(...selection));
 
-      this.setState({ selectedSets: [] });
-      this.renderGeoJson();
-    }
-    function applyOperation(geojson, operation) {
-      const selection = geojson.features.filter((_, index) => operation.selection.includes(index));
-      const combineFn = { union, intersect }[operation.fn];
-      combineAndReplace(geojson, selection, combineFn);
+      return geojson;
     }
 
     this.geojson = operations.reduce(applyOperation, initialGeoJson);
