@@ -61,6 +61,28 @@ exports.please = functions.https.onRequest((req, res) => {
   });
 });
 
+exports.please2 = functions.https.onRequest((req, res) => {
+  const projectRef =
+    admin
+      .database()
+      .ref('projects')
+      .child('sample-project')
+      .child('operations')
+      .set([
+        {
+          name: 'union',
+          selection: [0, 1],
+        }
+      ])
+      .then(() => { // eslint-disable-line promise/always-return
+        res.send('It worked');
+      })
+      .catch(() => {
+        res.send('It failed :(');
+      })
+  ;
+});
+
 
 // Based on example:
 // https://firebase.google.com/docs/functions/get-started#add_the_addmessage_functions
