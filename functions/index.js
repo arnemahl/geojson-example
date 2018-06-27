@@ -35,69 +35,68 @@ function isValid(geojson) {
 // https://firebase.google.com/docs/functions/get-started#add_the_addmessage_functions
 exports.addOperation = functions.https.onRequest((req, res) => {
   cors(req, res, () => {
-    try {
-      // We only have this one project for now, but that could change.
-      const projectName = 'sample-project';
+    // We only have this one project for now, but that could change.
+    const projectName = 'sample-project';
 
-      const projectRef =
-        admin
-          .database()
-          .ref('projects')
-          .child(projectName)
+    const projectRef =
+      admin
+        .database()
+        .ref('projects')
+        .child(projectName)
+    ;
+
+    // If we add more data to projects we might want to only fetch initialGeoJson and operations
+    // here, and not anything extra. That must be done in two operations, though.
+    projectRef.once('value', snap => {
+      const project = snap.val();
+
+      if (!project) {
+        res.status(404).json({ error: `Not Found: The project "${projectName}" does not exist.` });
+        return;
+      }
+
+      const { initialGeoJson, operations = [] } = project;
+
+      const currentGeoJson = operations.reduce(applyOperation, initialGeoJson);
+
+      const nextOperation = {
+        name: req.query.name,
+        selection: (req.query.selection || '').split(',').map(Number),
+      };
+
+      if (nextOperation.selection.length !== 2) {
+        res.status(400).json({ error: `Bad Request: Currently only supports operations on exactly two features.` });
+        return;
+      }
+      if (nextOperation.selection.some(index => typeof currentGeoJson.features[index] !== 'object')) {
+        res.status(400).json({ error: `Bad Request: The selection contains nonexistent features.` });
+        return;
+      }
+      if (['union', 'intersect'].indexOf(nextOperation.name) === -1) {
+        res.status(400).json({ error: `Bad Request: The operation "${nextOperation.name}" is not supported.` });
+        return;
+      }
+
+      const nextGeoJson = applyOperation(currentGeoJson, nextOperation);
+
+      if (!isValid(nextGeoJson)) {
+        res.status(400).json({ error: `Bad Request: Applying the operation would produce an invalid GeoJSON.` });
+        return;
+      }
+
+      projectRef
+        .child('operations')
+        .set(operations.concat(nextOperation))
+        .then(() => { // eslint-disable-line promise/always-return
+          res.status(200).json({ message: 'OK' });
+        })
+        .catch(error => {
+          res.status(500).json({ error });
+        })
       ;
+    });
+  });
+});
 
-      // If we add more data to projects we might want to only fetch initialGeoJson and operations
-      // here, and not anything extra. That must be done in two operations, though.
-      projectRef.once('value', snap => {
-        const project = snap.val();
-
-        if (!project) {
-          res.status(404).json({ error: `Not Found: The project "${projectName}" does not exist.` });
-          return;
-        }
-
-        const { initialGeoJson, operations = [] } = project;
-
-        const currentGeoJson = operations.reduce(applyOperation, initialGeoJson);
-
-        const nextOperation = {
-          name: req.query.name,
-          selection: (req.query.selection || '').split(',').map(Number),
-        };
-
-        if (nextOperation.selection.length !== 2) {
-          res.status(400).json({ error: `Bad Request: Currently only supports operations on exactly two features.` });
-          return;
-        }
-        if (nextOperation.selection.some(index => typeof currentGeoJson.features[index] !== 'object')) {
-          res.status(400).json({ error: `Bad Request: The selection contains nonexistent features.` });
-          return;
-        }
-        if (['union', 'intersect'].indexOf(nextOperation.name) === -1) {
-          res.status(400).json({ error: `Bad Request: The operation "${nextOperation.name}" is not supported.` });
-          return;
-        }
-
-        const nextGeoJson = applyOperation(currentGeoJson, nextOperation);
-
-        if (!isValid(nextGeoJson)) {
-          res.status(400).json({ error: `Bad Request: Applying the operation would produce an invalid GeoJSON.` });
-          return;
-        }
-
-        projectRef
-          .child('operations')
-          .set(operations.concat(nextOperation))
-          .then(() => { // eslint-disable-line promise/always-return
-            res.status(200).json({ message: 'OK' });
-          })
-          .catch(error => {
-            res.status(500).json({ error });
-          })
-        ;
-      });
-    } catch (error) {
-      res.status(500).json({ error });
-    }
   });
 });
