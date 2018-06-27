@@ -78,7 +78,7 @@ exports.addOperation = functions.https.onRequest((req, res) => {
           res.status(400).json({ error: `Bad Request: The selection contains nonexistent features.` });
           return;
         }
-        if (['union', 'intersect'].includes(nextOperation.name)) {
+        if (['union', 'intersect'].indexOf(nextOperation.name) === -1) {
           res.status(400).json({ error: `Bad Request: The operation "${nextOperation.name}" is not supported.` });
           return;
         }
