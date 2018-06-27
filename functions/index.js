@@ -5,6 +5,8 @@ const cors = require('cors')({ origin: true });
 const union = require('@turf/union');
 const intersect = require('@turf/intersect');
 
+admin.initializeApp();
+
 // // Create and Deploy Your First Cloud Functions
 // // https://firebase.google.com/docs/functions/write-firebase-functions
 
