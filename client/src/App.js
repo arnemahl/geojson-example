@@ -33,6 +33,9 @@ class App extends Component {
     addOperationAsync: {
       req: REQ.INIT,
     },
+    removeOperationAsync: {
+      req: REQ.INIT,
+    },
   }
 
   onSetClick = (felaySet) => (event) => {
@@ -153,7 +156,6 @@ class App extends Component {
     });
 
     xhr
-      // .post(`https://us-central1-geojson-arne.cloudfunctions.net/addOperation?operation=${window.encodeURIComponent(JSON.stringify({ name, selection }))}`)
       .post(`https://us-central1-geojson-arne.cloudfunctions.net/addOperation?name=${name}&selection=${selection.join(',')}`)
       .then(
         () => {
@@ -177,20 +179,29 @@ class App extends Component {
     this.performOperation('intersect');
   }
 
-  revertLastOperation = () => {
-    const { operations } = this.db;
+  revertLastOperation = (name) => {
+    this.setState({
+      removeOperationAsync: { req: REQ.PENDING },
+    });
 
-    if (!operations) {
-      return;
-    }
-
-    this.dbRef.child('operations').set(
-      operations.slice(0, operations.length - 1)
-    );
+    xhr
+      .post(`https://us-central1-geojson-arne.cloudfunctions.net/removeLastOperation`)
+      .then(
+        () => {
+          this.setState({
+            removeOperationAsync: { req: REQ.SUCCESS }
+          });
+        },
+        () => {
+          this.setState({
+            removeOperationAsync: { req: REQ.ERROR }
+          });
+        }
+      );
   }
 
   render() {
-    const { selectedSets, lastOperation, addOperationAsync } = this.state;
+    const { selectedSets, lastOperation, addOperationAsync, removeOperationAsync } = this.state;
 
     this.felaySets.forEach(felaySet => {
       if (selectedSets.includes(felaySet)) {
@@ -230,10 +241,18 @@ class App extends Component {
           <div>
             {{
               [REQ.INIT]: '',
-              [REQ.PENDING]: 'Request pending',
-              [REQ.ERROR]: 'Request error',
-              [REQ.SUCCESS]: 'Request success',
+              [REQ.PENDING]: 'Perform operation: pending',
+              [REQ.ERROR]: 'Perform operation: error',
+              [REQ.SUCCESS]: 'Perform operation: success',
             }[addOperationAsync.req]}
+          </div>
+          <div>
+            {{
+              [REQ.INIT]: '',
+              [REQ.PENDING]: 'Revert operation: pending',
+              [REQ.ERROR]: 'Revert operation: error',
+              [REQ.SUCCESS]: 'Revert operation: success',
+            }[removeOperationAsync.req]}
           </div>
         </div>
       </Fragment>
