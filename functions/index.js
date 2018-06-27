@@ -74,7 +74,7 @@ exports.addOperation = functions.https.onRequest((req, res) => {
           res.status(400).json({ error: `Bad Request: Currently only supports operations on exactly two features.` });
           return;
         }
-        if (nextOperation.selection.some(index => currentGeoJson.features[index] !== 'object')) {
+        if (nextOperation.selection.some(index => typeof currentGeoJson.features[index] !== 'object')) {
           res.status(400).json({ error: `Bad Request: The selection contains nonexistent features.` });
           return;
         }
