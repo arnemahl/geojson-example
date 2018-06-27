@@ -14,7 +14,7 @@ admin.initializeApp();
 //  response.send("Hello from Firebase!");
 // });
 
-function addOperation(geojson, operation) {
+function applyOperation(geojson, operation) {
   const selection = geojson.features.filter((_, index) => operation.selection.includes(index));
   const combineFn = { union, intersect }[operation.name];
 
@@ -98,7 +98,8 @@ exports.addOperation = functions.https.onRequest((req, res) => {
           })
           .catch(error => {
             res.status(500).json({ error });
-          });
+          })
+        ;
       });
     } catch (error) {
       res.status(500).json({ error });
