@@ -2,8 +2,8 @@ const functions = require('firebase-functions');
 const admin = require('firebase-admin');
 const cors = require('cors')({ origin: true });
 
-const union = require('@turf/union');
-const intersect = require('@turf/intersect');
+const union = require('@turf/union').default;
+const intersect = require('@turf/intersect').default;
 
 admin.initializeApp();
 
