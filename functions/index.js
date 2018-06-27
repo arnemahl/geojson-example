@@ -9,7 +9,7 @@ const intersect = require('@turf/intersect');
 //  response.send("Hello from Firebase!");
 // });
 
-function applyOperation(geojson, operation) {
+function addOperation(geojson, operation) {
   const selection = geojson.features.filter((_, index) => operation.selection.includes(index));
   const combineFn = { union, intersect }[operation.name];
 

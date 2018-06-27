@@ -6,6 +6,7 @@ import union from '@turf/union';
 import intersect from '@turf/intersect';
 
 import firebase from 'firebase';
+import xhr, { REQ } from 'util/xhr';
 
 const layerStyle = {
   default: {
@@ -29,6 +30,9 @@ class App extends Component {
   state = {
     selectedSets: [],
     lastOperation: void 0,
+    addOperationAsync: {
+      req: REQ.INIT,
+    },
   }
 
   onSetClick = (felaySet) => (event) => {
@@ -143,11 +147,25 @@ class App extends Component {
   performOperation(name) {
     const selection = this.state.selectedSets.map(felaySet => this.geojson.features.indexOf(felaySet.feature))
 
-    this.setState({ selectedSets: [] });
+    this.setState({
+      selectedSets: [],
+      addOperationAsync: { req: REQ.PENDING },
+    });
 
-    this.dbRef.child('operations').set(
-      this.db.operations.concat({ name, selection })
-    );
+    xhr
+      .post(`https://us-central1-geojson-arne.cloudfunctions.net/addOperation?operation=${window.encodeURIComponent(JSON.stringify({ name, selection }))}`)
+      .then(
+        () => {
+          this.setState({
+            addOperationAsync: { req: REQ.SUCCESS }
+          });
+        },
+        () => {
+          this.setState({
+            addOperationAsync: { req: REQ.ERROR }
+          });
+        }
+      );
   }
 
   performUnion = () => {
@@ -171,7 +189,7 @@ class App extends Component {
   }
 
   render() {
-    const { selectedSets, lastOperation } = this.state;
+    const { selectedSets, lastOperation, addOperationAsync } = this.state;
 
     this.felaySets.forEach(felaySet => {
       if (selectedSets.includes(felaySet)) {
@@ -181,31 +199,41 @@ class App extends Component {
       }
     });
 
+    const reqPending = addOperationAsync.req === REQ.PENDING;
+
     return (
       <Fragment>
         <div id="map" style={{width: '100vw', height: '80vh'}} />
         <div className="geojson-controls">
           <button
-            disabled={selectedSets.length !== 2}
+            disabled={reqPending || (selectedSets.length !== 2)}
             title={selectedSets.length !== 2 ? 'Select exactly two polygons to perform union' : ''}
             onClick={this.performUnion}
           >
             Union
           </button>
           <button
-            disabled={selectedSets.length !== 2}
+            disabled={reqPending || (selectedSets.length !== 2)}
             title={selectedSets.length !== 2 ? 'Select exactly two polygons to perform intersect' : ''}
             onClick={this.performIntersect}
           >
             Intersect
           </button>
           <button
-            disabled={!lastOperation}
+            disabled={reqPending || !lastOperation}
             title={!lastOperation ? 'No operations to revert' : `Revert last operation (${lastOperation.name})`}
             onClick={this.revertLastOperation}
           >
             Revert operation
           </button>
+          <div>
+            {{
+              [REQ.INIT]: '',
+              [REQ.PENDING]: 'Request pending',
+              [REQ.ERROR]: 'Request error',
+              [REQ.SUCCESS]: 'Request success',
+            }[addOperationAsync.req]}
+          </div>
         </div>
       </Fragment>
     );
