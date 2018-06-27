@@ -153,7 +153,8 @@ class App extends Component {
     });
 
     xhr
-      .post(`https://us-central1-geojson-arne.cloudfunctions.net/addOperation?operation=${window.encodeURIComponent(JSON.stringify({ name, selection }))}`)
+      // .post(`https://us-central1-geojson-arne.cloudfunctions.net/addOperation?operation=${window.encodeURIComponent(JSON.stringify({ name, selection }))}`)
+      .post(`https://us-central1-geojson-arne.cloudfunctions.net/addOperation?name=${name}&selection=${selection.join(',')}`)
       .then(
         () => {
           this.setState({
