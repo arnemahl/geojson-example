@@ -18,7 +18,7 @@ function applyOperation(geojson, operation) {
   return Object.assign({}, geojson, {
     features: geojson.features
       .filter(remaining => !selection.includes(remaining))
-      .concat(arrNotNull(combineFn(...selection)))
+      .concat(arrNotNull(combineFn(selection[0], selection[1])))
   });
 }
 
@@ -58,6 +58,10 @@ exports.addOperation = functions.https.onRequest((req, res) => {
       selection: req.query.selection,
     };
 
+    if (nextOperation.selection.length !== 2) {
+      res.status(400).json({ error: `Bad Request: Currently only supports operations on exactly two features.` });
+      return;
+    }
     if (nextOperation.selection.some(index => currentGeoJson.features[index] !== 'object')) {
       res.status(400).json({ error: `Bad Request: The selection contains nonexistent features.` });
       return;
