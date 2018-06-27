@@ -15,12 +15,11 @@ function applyOperation(geojson, operation) {
 
   const arrNotNull = (val) => val === null ? [] : val;
 
-  return {
-    ...geojson,
+  return Object.assign({}, geojson, {
     features: geojson.features
       .filter(remaining => !selection.includes(remaining))
-      .concat(arrNotNull(combineFn(...selection))),
-  };
+      .concat(arrNotNull(combineFn(...selection)))
+  });
 }
 
 function isValid(geojson) {
@@ -78,7 +77,7 @@ exports.addOperation = functions.https.onRequest((req, res) => {
     projectRef
       .child('operations')
       .push(nextOperation)
-      .then(() => {
+      .then(() => { // eslint-disable-line promise/always-return
         res.status(200).json({ message: 'OK' });
       })
       .catch(error => {
