@@ -87,7 +87,7 @@ exports.addOperation = functions.https.onRequest((req, res) => {
 
       projectRef
         .child('operations')
-        .push(nextOperation)
+        .set(operations.concat(nextOperation))
         .then(() => { // eslint-disable-line promise/always-return
           res.status(200).json({ message: 'OK' });
         })
