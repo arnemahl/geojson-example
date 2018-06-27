@@ -34,7 +34,12 @@ function isValid(geojson) {
 // Based on example:
 // https://firebase.google.com/docs/functions/get-started#add_the_addmessage_functions
 exports.addOperation = functions.https.onRequest((req, res) => {
+  let t0 = Date.now();
+  let i = 0;
+  const time = (str = i++) => console.log(`${str}, time elapsed: ${Date.now() - t0}`);
+
   cors(req, res, () => {
+    time('cors');
     try {
       // We only have this one project for now, but that could change.
       const projectName = 'sample-project';
@@ -48,7 +53,9 @@ exports.addOperation = functions.https.onRequest((req, res) => {
 
       // If we add more data to projects we might want to only fetch initialGeoJson and operations
       // here, and not anything extra. That must be done in two operations, though.
+      time();
       projectRef.once('value', snap => {
+        time(`once`);
         const project = snap.val();
 
         if (!project) {
@@ -84,14 +91,17 @@ exports.addOperation = functions.https.onRequest((req, res) => {
           res.status(400).json({ error: `Bad Request: Applying the operation would produce an invalid GeoJSON.` });
           return;
         }
+        time(`valid`);
 
         projectRef
           .child('operations')
           .set(operations.concat(nextOperation))
           .then(() => { // eslint-disable-line promise/always-return
+            time(`200`);
             res.status(200).json({ message: 'OK' });
           })
           .catch(error => {
+            time(`500`);
             res.status(500).json({ error });
           })
         ;
