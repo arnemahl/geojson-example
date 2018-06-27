@@ -1,4 +1,6 @@
 const functions = require('firebase-functions');
+const admin = require('firebase-admin');
+
 const union = require('@turf/union');
 const intersect = require('@turf/intersect');
 
