@@ -31,6 +31,12 @@ function isValid(geojson) {
   return true; // I don't know how to validate GeoJSON
 }
 
+exports.helloCors = functions.https.onRequest((req, res) => {
+  cors(req, res, () => {
+    res.send("Hello from Firebase!");
+  });
+});
+
 // Based on example:
 // https://firebase.google.com/docs/functions/get-started#add_the_addmessage_functions
 exports.addOperation = functions.https.onRequest((req, res) => {
