@@ -98,5 +98,38 @@ exports.addOperation = functions.https.onRequest((req, res) => {
   });
 });
 
+exports.removeLastOperation = functions.https.onRequest((req, res) => {
+  cors(req, res, () => {
+    // We only have this one project for now, but that could change.
+    const projectName = 'sample-project';
+
+    const operationsRef =
+      admin
+        .database()
+        .ref('projects')
+        .child(projectName)
+        .child('operations')
+    ;
+
+    operationsRef.once('value', snap => {
+      const operations = snap.val();
+
+      if (!operations) {
+        res.status(404).json({ error: `Not Found: Either the project "${projectName}" does not exist or it has no operations to remove.` });
+        return;
+      }
+
+      operationsRef
+        .set(
+          operations.slice(0, operations.length - 1)
+        )
+        .then(() => { // eslint-disable-line promise/always-return
+          res.status(200).json({ message: 'OK' });
+        })
+        .catch(error => {
+          res.status(500).json({ error });
+        })
+      ;
+    });
   });
 });
