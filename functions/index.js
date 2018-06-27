@@ -61,9 +61,13 @@ exports.addOperation = functions.https.onRequest((req, res) => {
         const currentGeoJson = operations.reduce(applyOperation, initialGeoJson);
 
         // const nextOperation = JSON.parse(decodeURIComponent(req.query));
+        // const nextOperation = {
+        //   name: req.query.name,
+        //   selection: (req.query.selection || '').split(','),
+        // };
         const nextOperation = {
-          name: req.query.name,
-          selection: (req.query.selection || '').split(','),
+          name: 'union',
+          selection: [0, 1],
         };
 
         if (nextOperation.selection.length !== 2) {
